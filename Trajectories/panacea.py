@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jun 10 11:11:20 2020
-
+This code is intened to help Greenlandings.org with flights data
 @author: jialiliang
 """
 
@@ -13,12 +12,12 @@ import numpy as np
 import datetime
 import matplotlib.dates as mdates
 
-#################################################
+##############################################################
 # Define global variable here
 global content 
 content = ["Date","Total Count","Total Cancelled", "BWI","IAD","DCA", "LGA", 
                         "JFK", "TEB", "EWR","LAX","BUR","ASE","XNA"]
-###################################################
+###############################################################
 
 # Given an airline or airport name, count how many times it appears
 def search_air(data,airline):
@@ -53,7 +52,7 @@ def search_air_2(data1,airline1,data2,airline2,NOT2=False):
     
     return match2
 
-
+# Given a variable name and return the variable name in string
 def variablename(var):
      return [tpl[0] for tpl in filter(lambda x: var is x[1], globals().items())]
 
@@ -74,12 +73,13 @@ def interest_data(dtf_file):
     global content_list
     content_list = [Date, Total_count,Cancelled]
 
-    # Search the airport of interest
+    # Search the airport of interest ( ARR + DEP )
     # Start from BWI
     for airport in content[3:]:
         content_list.append(search_air_2(ARR,airport,Flt_stat, "CANCELLED",NOT2 = True)\
                             + search_air_2(DEP,airport,Flt_stat, "CANCELLED",NOT2 = True))
-
+            
+    #Output count
     count = [Date,Total_count]
     
     # Skip the first(Date) and Second(total_count) 
@@ -148,10 +148,12 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
     #fig.savefig('total_flights.png')
 
 
-data_sum = read_data()
-plot_data(data_sum[:,0],data_sum[:,1],data1=data_sum[:,2],label0='Total Flight',label1='Cancelled flight')
-plot_data(data_sum[:,0],data_sum[:,2],label0='Cancelled flight')
-write2xls(data_sum)
+# Main running here
+if __name__ == '__main__':
+    data_sum = read_data()
+    plot_data(data_sum[:,0],data_sum[:,1],data1=data_sum[:,2],label0='Total Flight',label1='Cancelled flight')
+    #plot_data(data_sum[:,0],data_sum[:,2],label0='Cancelled flight')
+    write2xls(data_sum)
 
 
 
