@@ -9,8 +9,6 @@ Created on Wed Jun 10 11:11:20 2020
 import matplotlib.pyplot as plt
 import xlsxwriter
 import glob
-from matplotlib.dates import (YEARLY, DateFormatter,
-                              rrulewrapper, RRuleLocator, drange)
 import numpy as np
 import datetime
 import matplotlib.dates as mdates
@@ -38,10 +36,13 @@ def air_count(data,list):
     return air_count
 
 # given two search words to find out the matching data
+# Not2 is to search the flight status without the keyword 
 def search_air_2(data1,airline1,data2,airline2,NOT2=False):
-   # calls the function do one key_word search
+   # Find all the index which has keyword1
     match1 = search_air(data1,airline1)
     match2 = []
+    
+    # From the match of first one, search for the index which matchs second keyword
     for i in match1:
         if NOT2 == False:
             if airline2 in str(data2[i]) :
@@ -56,32 +57,29 @@ def search_air_2(data1,airline1,data2,airline2,NOT2=False):
 def variablename(var):
      return [tpl[0] for tpl in filter(lambda x: var is x[1], globals().items())]
 
+
+# Extract data of interest and return the count
 def interest_data(dtf_file):
     global Fltid; global DEP; global ARR; global Flt_stat
     Fltid, DEP, ARR, Flt_stat = np.loadtxt(dtf_file,usecols=(0,1,2,7),skiprows=2,unpack=True,dtype='U10')
     #list_airline = ["AAL","UAL","DAL","SWA","EJA"]
     #AAL,UAL,DAL,SWA,EJA = air_count(Fltid,list_airline)
-    #EWR_DEP_AAL = search_air_2(Fltid,"AAL",DEP,"EWR")
-    #EWR_DEP_DAL,ATL_DEP,BWI_DEP,TEB_DEP,JFK_DEP = air_count(search_air(DEP,"AAL"),DEP)
+
     Date = dtf_file.split(".")[0]
     Total_count = len(Fltid)
+    # Find out how many flights status are cancelled
     Cancelled = search_air(Flt_stat, "CANCELLED")
-    
-    BWI = search_air_2(ARR,"BWI",Flt_stat, "CANCELLED",NOT2 = True)
-    IAD = search_air_2(ARR,"IAD",Flt_stat, "CANCELLED",NOT2 = True)
-    DCA = search_air_2(ARR,"DCA",Flt_stat, "CANCELLED",NOT2 = True)
-    LGA = search_air_2(ARR,"LGA",Flt_stat, "CANCELLED",NOT2 = True)
-    JFK = search_air_2(ARR,"JFK",Flt_stat, "CANCELLED",NOT2 = True)
-    TEB = search_air_2(ARR,"TEB",Flt_stat, "CANCELLED",NOT2 = True)
-    EWR = search_air_2(ARR,"EWR",Flt_stat, "CANCELLED",NOT2 = True)
-    LAX = search_air_2(ARR,"LAX",Flt_stat, "CANCELLED",NOT2 = True)
-    BUR = search_air_2(ARR,"BUR",Flt_stat, "CANCELLED",NOT2 = True)
-    ASE = search_air_2(ARR,"ASE",Flt_stat, "CANCELLED",NOT2 = True)
-    XNA = search_air_2(ARR,"XNA",Flt_stat, "CANCELLED",NOT2 = True)
     
     # Build the return list 
     global content_list
-    content_list = [Date, Total_count,Cancelled,BWI,IAD,DCA,LGA,JFK,TEB,EWR,LAX,BUR,ASE,XNA]
+    content_list = [Date, Total_count,Cancelled]
+
+    # Search the airport of interest
+    # Start from BWI
+    for airport in content[3:]:
+        content_list.append(search_air_2(ARR,airport,Flt_stat, "CANCELLED",NOT2 = True)\
+                            + search_air_2(DEP,airport,Flt_stat, "CANCELLED",NOT2 = True))
+
     count = [Date,Total_count]
     
     # Skip the first(Date) and Second(total_count) 
@@ -90,32 +88,23 @@ def interest_data(dtf_file):
     return count
 
 
+# This function writes the data to an excel file
 def write2xls(data):
+    # Create an excel file
     workbook = xlsxwriter.Workbook('Cancelled Flight.xlsx') 
     worksheet = workbook.add_worksheet()
 
+    # Write the title to excel 
     for inx in range(len(content)):
         worksheet.write(0, inx, content[inx]) 
     
     
-    # iterating through content list 
+    # Write the content
     for item in range(len(data)):
         for index in range(len(data[0])):
             worksheet.write(item+1, index, data[item][index]) 
     workbook.close()
 
-'''
-def read_data(dir=''):
-    
-    files = glob.glob(dir+"*.dft")
-    files.sort()
-    data_sum = []#np.zeros(len(files))
-    print(files)
-    for i in range(len(files)):
-        print(files[i])
-        data_sum.append(interest_data(files[i]))
-    return data_sum
-'''
 
 def read_data(dir=''):
     
