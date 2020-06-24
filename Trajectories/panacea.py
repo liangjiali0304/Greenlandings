@@ -110,7 +110,7 @@ def read_data(dir=''):
     
     files = glob.glob(dir+"*.dft")
     files.sort()
-    data_sum = np.zeros((len(files),14))
+    data_sum = np.zeros((len(files),len(content)))
     print(files)
     for i in range(len(files)):
         print(files[i])
@@ -121,7 +121,10 @@ def read_data(dir=''):
 # This function plots the data vs date needed upto 4 different dataset.
 # For example, I can plot JFK,TEB,LGA,EWR vs Date
 def plot_data(date,data0,label0=None, data1=[],label1=None,\
-              data2=[],label2=None,data3=[],label3=None,plt_title='Flight trend in the US'):
+              data2=[],label2=None,data3=[],label3=None,data4=[],label4=None,\
+                  plt_title='Flight trend in the US'):
+    
+    
     dates = []
     # This translate the number 200301 to 2020/3/1
     # It also translate the date into python plotting format
@@ -130,28 +133,38 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
         dates.append( datetime.datetime(2000+yr, mo, day))
     
     # This is the ploting function itself
-    fig, ax = plt.subplots(constrained_layout=True,figsize=(15, 10),dpi=100)
+    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=300)
     locator = mdates.AutoDateLocator()
     formatter = mdates.ConciseDateFormatter(locator)
-    ax.xaxis.set_major_locator(locator)
-    ax.xaxis.set_major_formatter(formatter)
-    ax.plot(dates, data0,label = label0)
+    ax1.xaxis.set_major_locator(locator)
+    ax1.xaxis.set_major_formatter(formatter)
+    ln0 = ax1.plot(dates, data0,label = label0,color='teal')
+    ax1.tick_params(axis='y', labelcolor='teal')
     
-    # Optional plotting of the rest three data
-    if len(data1) != 0: ax.plot(dates, data1,label=label1)
-    if len(data2) != 0: ax.plot(dates, data2,label=label2)  
-    if len(data3) != 0: ax.plot(dates, data3,label=label3)
+    lns = ln0
+    # Optional plotting of the rest three data on the same scale
+    if len(data1) != 0: ln1 = ax1.plot(dates, data1,label=label1,color='goldenrod'); lns += ln1
+    if len(data2) != 0: ln2 = ax1.plot(dates, data2,label=label2,color='orangered'); lns += ln2  
+    if len(data3) != 0: ln3 = ax1.plot(dates, data3,label=label3,color='orchid'); lns += ln3
     
-    ax.set_title(plt_title)
-    ax.set_ylabel('# of Flights')
-    ax.legend()
-    #fig.savefig('total_flights.png')
+    # Different scale 
+    if len(data4) != 0: ax2 = ax1.twinx(); ln4 =ax2.plot(dates, data4,label=label4,color='r');ax2.tick_params(axis='y', labelcolor='r'); lns += ln4
+    ax1.set_title(plt_title)
+    ax1.set_ylabel('# of Flights')
+    
+    labs = [l.get_label() for l in lns]
+    ax1.legend(lns, labs, loc=0,prop={'size': 16})
+    plt.show()
+    fig.savefig(plt_title)
 
 
 # Main running here
 if __name__ == '__main__':
     data_sum = read_data()
-    plot_data(data_sum[:,0],data_sum[:,1],data1=data_sum[:,2],label0='Total Flight',label1='Cancelled flight')
+    # LGA = data[:,6], JFK = 7, TEB=8, EWR = 9
+    plot_data(data_sum[:,0],data_sum[:,1],data4=data_sum[:,2],label0='Total Flight',label4='Cancelled flight')
+    plot_data(data_sum[:,0],data_sum[:,6],data1=data_sum[:,7],data2=data_sum[:,8],\
+              data3=data_sum[:,9],label0='LGA',label1='JFK',label2='TEB',label3='EWR',plt_title='NYC Metropolitan')
     #plot_data(data_sum[:,0],data_sum[:,2],label0='Cancelled flight')
     write2xls(data_sum)
 
