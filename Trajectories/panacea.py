@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 import xlsxwriter
 import glob
 import numpy as np
-import datetime
+from datetime import datetime as dt
 import matplotlib.dates as mdates
-
+import datetime
 ##############################################################
 # Define global variable here
 global content 
@@ -27,7 +27,7 @@ def search_air(data,airline):
             match.append(i)
     return match
 
-# Given the list of airlines, count how many times it appears
+# Given the list of airlines or airports, count how many times it appears
 def air_count(data,list):
     air_count = []
     for i in list: 
@@ -56,6 +56,9 @@ def search_air_2(data1,airline1,data2,airline2,NOT2=False):
 def variablename(var):
      return [tpl[0] for tpl in filter(lambda x: var is x[1], globals().items())]
 
+# GIven two lists and find the difference in between. Used to solve LGA LGAV confusion
+def Diff(li1, li2): 
+    return (list(set(li1) - set(li2)))
 
 # Extract data of interest and return the count
 def interest_data(dtf_file):
@@ -78,7 +81,12 @@ def interest_data(dtf_file):
     for airport in content[3:]:
         content_list.append(search_air_2(ARR,airport,Flt_stat, "CANCELLED",NOT2 = True)\
                             + search_air_2(DEP,airport,Flt_stat, "CANCELLED",NOT2 = True))
-            
+
+    global LGAV
+    LGAV = search_air_2(ARR,"LGAV",Flt_stat, "CANCELLED",NOT2 = True) +  search_air_2(DEP,'LGAV',Flt_stat, "CANCELLED",NOT2 = True)    
+    # Make amendment to LGA: LGA = search_LGA - LGAV
+    content_list[6] = Diff(content_list[6],LGAV)
+    
     #Output count
     count = [Date,Total_count]
     
@@ -91,7 +99,8 @@ def interest_data(dtf_file):
 # This function writes the data to an excel file
 def write2xls(data):
     # Create an excel file
-    workbook = xlsxwriter.Workbook('Cancelled Flight.xlsx') 
+    time = dt.now().strftime("%m_%d_%H%M")
+    workbook = xlsxwriter.Workbook('Cancelled Flight %s.xlsx'%time) 
     worksheet = workbook.add_worksheet()
 
     # Write the title to excel 
@@ -133,7 +142,7 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
         dates.append( datetime.datetime(2000+yr, mo, day))
     
     # This is the ploting function itself
-    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=300)
+    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=30)
     locator = mdates.AutoDateLocator()
     formatter = mdates.ConciseDateFormatter(locator)
     ax1.xaxis.set_major_locator(locator)
@@ -141,13 +150,14 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
     ln0 = ax1.plot(dates, data0,label = label0,color='teal')
     ax1.tick_params(axis='y', labelcolor='teal')
     
+    # Combinition of lines so I can plot the legend easily later
     lns = ln0
     # Optional plotting of the rest three data on the same scale
     if len(data1) != 0: ln1 = ax1.plot(dates, data1,label=label1,color='goldenrod'); lns += ln1
     if len(data2) != 0: ln2 = ax1.plot(dates, data2,label=label2,color='orangered'); lns += ln2  
     if len(data3) != 0: ln3 = ax1.plot(dates, data3,label=label3,color='orchid'); lns += ln3
     
-    # Different scale 
+    # Plotting data on different scale 
     if len(data4) != 0: ax2 = ax1.twinx(); ln4 =ax2.plot(dates, data4,label=label4,color='r');ax2.tick_params(axis='y', labelcolor='r'); lns += ln4
     ax1.set_title(plt_title)
     ax1.set_ylabel('# of Flights')
@@ -155,7 +165,7 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
     labs = [l.get_label() for l in lns]
     ax1.legend(lns, labs, loc=0,prop={'size': 16})
     plt.show()
-    fig.savefig(plt_title)
+    #fig.savefig(plt_title)
 
 
 # Main running here
