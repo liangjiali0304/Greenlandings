@@ -60,6 +60,14 @@ def variablename(var):
 def Diff(li1, li2): 
     return (list(set(li1) - set(li2)))
 
+# given the index of the 
+def check_unique(inx):
+    return_arr = []
+    for i in inx:
+        return_arr.append(Fltid[i])
+    
+    return np.unique(return_arr)
+
 # Extract data of interest and return the count
 def interest_data(dtf_file):
     global Fltid; global DEP; global ARR; global Flt_stat
@@ -92,15 +100,15 @@ def interest_data(dtf_file):
     
     # Skip the first(Date) and Second(total_count) 
     for i in range(2, len(content_list)):
-        count.append(len(content_list[i]))
+        count.append(len(check_unique(content_list[i])))
     return count
 
 
 # This function writes the data to an excel file
 def write2xls(data):
     # Create an excel file
-    time = dt.now().strftime("%m_%d_%H%M")
-    workbook = xlsxwriter.Workbook('Cancelled Flight %s.xlsx'%time) 
+    time = dt.now().strftime("%Y_%m_%d_%H%M")
+    workbook = xlsxwriter.Workbook(time+'_flights.xlsx') 
     worksheet = workbook.add_worksheet()
 
     # Write the title to excel 
