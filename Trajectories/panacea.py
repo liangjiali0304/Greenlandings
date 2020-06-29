@@ -60,7 +60,7 @@ def variablename(var):
 def Diff(li1, li2): 
     return (list(set(li1) - set(li2)))
 
-# given the index of the 
+# given the index of the Flghtid, check unique values of Flghtid
 def check_unique(inx):
     return_arr = []
     for i in inx:
