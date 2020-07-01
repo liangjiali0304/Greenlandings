@@ -12,6 +12,11 @@ import numpy as np
 from datetime import datetime as dt
 import matplotlib.dates as mdates
 import datetime
+import re
+from collections import Counter
+import shutil
+import os
+
 ##############################################################
 # Define global variable here
 global content 
@@ -95,6 +100,8 @@ def interest_data(dtf_file):
     # Make amendment to LGA: LGA = search_LGA - LGAV
     content_list[6] = Diff(content_list[6],LGAV)
     
+    bar_chart(Fltid,Date)
+    
     #Output count
     count = [Date,Total_count]
     
@@ -103,12 +110,47 @@ def interest_data(dtf_file):
         count.append(len(check_unique(content_list[i])))
     return count
 
+def bar_chart(Fltid,date):
+    date = str(date)
+    name= []
+    # Seperate the airline name
+    for air in Fltid:
+        name.append(re.findall(r'[A-Za-z]+|\d+', air)[0])
+    #name = np.sort(name)
 
+    # Get the key and count component from the frequency counter file
+    Dic = Counter(name)
+    key=sorted(list(Dic.keys()))
+    count = []
+    for i in key:
+        count.append(Dic[i])
+    count = np.array(count)
+    # for plotting. Threshold is at least what number of flights you want to plot
+    threshold = 30
+    # index for the element that fits the threshold
+    index = np.where(count>threshold)
+    key_cond = []
+    for inx in index[0]:
+        key_cond.append(key[inx])
+    
+    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=100)
+    x = np.arange(len(count[index]))
+    ax1.bar(x, height=count[index])
+    #ax1.set_yscale('log')
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(key_cond)
+    ax1.set_ylim(0, 4000)
+    ax1.set_title("Number of flights in airlines on "+ date)
+    
+    fig.savefig(str(os.getcwd())+'/Output/'+date+'.png')
+    
+    
+    
 # This function writes the data to an excel file
-def write2xls(data):
+def write2xls(data,title='_flights.xlsx'):
     # Create an excel file
     time = dt.now().strftime("%Y_%m_%d_%H%M")
-    workbook = xlsxwriter.Workbook(time+'_flights.xlsx') 
+    workbook = xlsxwriter.Workbook(time+title) 
     worksheet = workbook.add_worksheet()
 
     # Write the title to excel 
@@ -150,7 +192,7 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
         dates.append( datetime.datetime(2000+yr, mo, day))
     
     # This is the ploting function itself
-    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=300)
+    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=30)
     locator = mdates.AutoDateLocator()
     formatter = mdates.ConciseDateFormatter(locator)
     ax1.xaxis.set_major_locator(locator)
@@ -173,18 +215,26 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
     labs = [l.get_label() for l in lns]
     ax1.legend(lns, labs, loc=0,prop={'size': 16})
     plt.show()
-    fig.savefig(plt_title)
+    #fig.savefig(plt_title)
 
 
 # Main running here
 if __name__ == '__main__':
+        # Check if there is a directory called Output, delete it if it exist.
+    if os.path.exists('Output'):
+        shutil.rmtree('Output')
+    # Creat a directory and save data inside it
+    os.makedirs('Output')
+    
+    
+    
     data_sum = read_data()
     # LGA = data[:,6], JFK = 7, TEB=8, EWR = 9
     plot_data(data_sum[:,0],data_sum[:,1],data4=data_sum[:,2],label0='Total Flight',label4='Cancelled flight')
     plot_data(data_sum[:,0],data_sum[:,6],data1=data_sum[:,7],data2=data_sum[:,8],\
               data3=data_sum[:,9],label0='LGA',label1='JFK',label2='TEB',label3='EWR',plt_title='NYC Metropolitan')
     #plot_data(data_sum[:,0],data_sum[:,2],label0='Cancelled flight')
-    write2xls(data_sum)
+    #write2xls(data_sum)
 
 
 
