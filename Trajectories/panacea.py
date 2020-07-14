@@ -133,7 +133,7 @@ def bar_chart(Fltid,date):
     for inx in index[0]:
         key_cond.append(key[inx])
     
-    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=100)
+    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=300)
     x = np.arange(len(count[index]))
     ax1.bar(x, height=count[index])
     #ax1.set_yscale('log')
