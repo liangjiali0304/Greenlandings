@@ -21,7 +21,7 @@ import os
 # Define global variable here
 global content 
 content = ["Date","Total Count","Total Cancelled", "BWI","IAD","DCA", "LGA", 
-                        "JFK", "TEB", "EWR","LAX","BUR","ASE","XNA"]
+                        "JFK", "TEB", "EWR","LAX","BUR","ASE","XNA","HEF"]
 ###############################################################
 
 # Given an airline or airport name, count how many times it appears
@@ -100,7 +100,7 @@ def interest_data(dtf_file):
     # Make amendment to LGA: LGA = search_LGA - LGAV
     content_list[6] = Diff(content_list[6],LGAV)
     
-    bar_chart(Fltid,Date)
+    #bar_chart(Fltid,Date)
     
     #Output count
     count = [Date,Total_count]
@@ -133,7 +133,7 @@ def bar_chart(Fltid,date):
     for inx in index[0]:
         key_cond.append(key[inx])
     
-    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=300)
+    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=30)
     x = np.arange(len(count[index]))
     ax1.bar(x, height=count[index])
     #ax1.set_yscale('log')
@@ -192,7 +192,7 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
         dates.append( datetime.datetime(2000+yr, mo, day))
     
     # This is the ploting function itself
-    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=30)
+    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=300)
     locator = mdates.AutoDateLocator()
     formatter = mdates.ConciseDateFormatter(locator)
     ax1.xaxis.set_major_locator(locator)
@@ -215,7 +215,7 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
     labs = [l.get_label() for l in lns]
     ax1.legend(lns, labs, loc=0,prop={'size': 16})
     plt.show()
-    #fig.savefig(plt_title)
+    fig.savefig(plt_title)
 
 
 # Main running here
@@ -233,8 +233,8 @@ if __name__ == '__main__':
     plot_data(data_sum[:,0],data_sum[:,1],data4=data_sum[:,2],label0='Total Flight',label4='Cancelled flight')
     plot_data(data_sum[:,0],data_sum[:,6],data1=data_sum[:,7],data2=data_sum[:,8],\
               data3=data_sum[:,9],label0='LGA',label1='JFK',label2='TEB',label3='EWR',plt_title='NYC Metropolitan')
-    #plot_data(data_sum[:,0],data_sum[:,2],label0='Cancelled flight')
-    #write2xls(data_sum)
+    plot_data(data_sum[:,0],data_sum[:,3],data1=data_sum[:,4],data2=data_sum[:,5],label0='BWI',label1='IAD',label2='DCA',plt_title='Washington Metropolitan')
+    write2xls(data_sum)
 
 
 
