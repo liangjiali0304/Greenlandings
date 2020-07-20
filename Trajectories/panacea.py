@@ -142,7 +142,7 @@ def bar_chart(Fltid,date):
     ax1.set_ylim(0, 4000)
     ax1.set_title("Number of flights in airlines on "+ date)
     
-    fig.savefig(str(os.getcwd())+'/Output/'+date+'.png')
+    #fig.savefig(str(os.getcwd())+'/Output/'+date+'.png')
     
     
     
@@ -161,7 +161,20 @@ def write2xls(data,title='_flights.xlsx'):
     # Write the content
     for item in range(len(data)):
         for index in range(len(data[0])):
-            worksheet.write(item+1, index, data[item][index]) 
+            things2write = data[item][index]
+            
+            # In the condition of writing the date change 
+            # the format from 2000301 to 2020/3/1
+            if index == 0:
+                things2write = Canon_date(things2write)
+            
+            # CHeck if there are any errors in the total count for example 05/13 and 05/23
+            if index == 1:
+                if check_error_total_count_Flag & (int(things2write) < 4000): 
+                    things2write = (data[item-1][index]+data[item+1][index]) / 2
+                
+                
+            worksheet.write(item+1, index, things2write) 
     workbook.close()
 
 
@@ -177,6 +190,10 @@ def read_data(dir=''):
     return data_sum 
 
 
+def Canon_date(i):
+    yr,mo,day = int(str(i)[0:2]),int(str(i)[2:4]),int(str(i)[4:6])
+    return "%s/%02d/%02d"%(2000+yr, mo, day)
+    
 # This function plots the data vs date needed upto 4 different dataset.
 # For example, I can plot JFK,TEB,LGA,EWR vs Date
 def plot_data(date,data0,label0=None, data1=[],label1=None,\
@@ -192,7 +209,7 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
         dates.append( datetime.datetime(2000+yr, mo, day))
     
     # This is the ploting function itself
-    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=300)
+    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=30)
     locator = mdates.AutoDateLocator()
     formatter = mdates.ConciseDateFormatter(locator)
     ax1.xaxis.set_major_locator(locator)
@@ -203,8 +220,8 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
     # Combinition of lines so I can plot the legend easily later
     lns = ln0
     # Optional plotting of the rest three data on the same scale
-    if len(data1) != 0: ln1 = ax1.plot(dates, data1,label=label1,color='goldenrod'); lns += ln1
-    if len(data2) != 0: ln2 = ax1.plot(dates, data2,label=label2,color='orangered'); lns += ln2  
+    if len(data1) != 0: ln1 = ax1.plot(dates, data1,label=label1,color='limegreen'); lns += ln1
+    if len(data2) != 0: ln2 = ax1.plot(dates, data2,label=label2,color='darkorange'); lns += ln2  
     if len(data3) != 0: ln3 = ax1.plot(dates, data3,label=label3,color='orchid'); lns += ln3
     
     # Plotting data on different scale 
@@ -215,11 +232,13 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
     labs = [l.get_label() for l in lns]
     ax1.legend(lns, labs, loc=0,prop={'size': 16})
     plt.show()
-    fig.savefig(plt_title)
+    #fig.savefig(plt_title)
 
 
 # Main running here
 if __name__ == '__main__':
+    
+    check_error_total_count_Flag = True # Check error count
         # Check if there is a directory called Output, delete it if it exist.
     if os.path.exists('Output'):
         shutil.rmtree('Output')
@@ -233,7 +252,7 @@ if __name__ == '__main__':
     plot_data(data_sum[:,0],data_sum[:,1],data4=data_sum[:,2],label0='Total Flight',label4='Cancelled flight')
     plot_data(data_sum[:,0],data_sum[:,6],data1=data_sum[:,7],data2=data_sum[:,8],\
               data3=data_sum[:,9],label0='LGA',label1='JFK',label2='TEB',label3='EWR',plt_title='NYC Metropolitan')
-    plot_data(data_sum[:,0],data_sum[:,3],data1=data_sum[:,4],data2=data_sum[:,5],label0='BWI',label1='IAD',label2='DCA',plt_title='Washington Metropolitan')
+    plot_data(data_sum[:,0],data_sum[:,3],data1=data_sum[:,4],data2=data_sum[:,5],data3=data_sum[:,14],label0='BWI',label1='IAD',label2='DCA',label3='HEF',plt_title='Washington Metropolitan')
     write2xls(data_sum)
 
 
