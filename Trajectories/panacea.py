@@ -21,7 +21,24 @@ import os
 # Define global variable here
 global content 
 content = ["Date","Total Count","Total Cancelled", "BWI","IAD","DCA", "LGA", 
-                        "JFK", "TEB", "EWR","LAX","BUR","ASE","XNA","HEF"]
+                        "JFK", "TEB", "EWR","LAX","BUR","ASE","XNA"]
+
+
+
+
+global TRACONs
+TRACONs = {"CA:SCT":['LAX','SAN','SNA','BUR','ONT','VNY'],\
+           "NY:N90":['JFK','EWR', 'LGA','TEB'], \
+           "CA:NCT":['SFO','SJC','OAK','SMF','RNO'],\
+           "DC:PCT":['IAD','DCA','BWI','RIC'],\
+           "TX:D10":['DFW','DAL'],\
+           "IL:C90":['ORD','MDW','PWK'],\
+           "GA:A80":['ATL','PDK'],\
+           "FL:MIA":['MIA','FLL','OPF','FXE'],\
+           "TX:I90":['IAH','HOU'], \
+           "CO:D01":['DEN','APA']}
+
+
 ###############################################################
 
 # Given an airline or airport name, count how many times it appears
@@ -61,7 +78,7 @@ def search_air_2(data1,airline1,data2,airline2,NOT2=False):
 def variablename(var):
      return [tpl[0] for tpl in filter(lambda x: var is x[1], globals().items())]
 
-# GIven two lists and find the difference in between. Used to solve LGA LGAV confusion
+# GIven two lists and find the difference in between. Used to solve LGA LGAV mixed up confusion
 def Diff(li1, li2): 
     return (list(set(li1) - set(li2)))
 
@@ -72,6 +89,20 @@ def check_unique(inx):
         return_arr.append(Fltid[i])
     
     return np.unique(return_arr)
+
+
+
+
+# function to return key for any value 
+def get_TRACON(val): 
+    for TRACON, airports in TRACONs.items(): 
+        for airport in airports:
+            if val == airport: 
+                return TRACON 
+  
+    return ""#"Airport doesn't exist in TRACON records"
+
+
 
 # Extract data of interest and return the count
 def interest_data(dtf_file):
@@ -107,7 +138,7 @@ def interest_data(dtf_file):
     
     # Skip the first(Date) and Second(total_count) 
     for i in range(2, len(content_list)):
-        count.append(len(check_unique(content_list[i])))
+        count.append(len(content_list[i]))  #  check_unique(content_list[i])
     return count
 
 def bar_chart(Fltid,date):
@@ -153,9 +184,15 @@ def write2xls(data,title='_flights.xlsx'):
     workbook = xlsxwriter.Workbook(time+title) 
     worksheet = workbook.add_worksheet()
 
-    # Write the title to excel 
+    # Write the  to excel 
+
+    # Write the TRACON and title to excel 
     for inx in range(len(content)):
-        worksheet.write(0, inx, content[inx]) 
+        # TRACON
+        worksheet.write(0, inx, get_TRACON(content[inx]))
+        
+        # Title
+        worksheet.write(1, inx, content[inx]) 
     
     
     # Write the content
@@ -168,13 +205,14 @@ def write2xls(data,title='_flights.xlsx'):
             if index == 0:
                 things2write = Canon_date(things2write)
             
-            # CHeck if there are any errors in the total count for example 05/13 and 05/23
+            # Check if there are any errors in the total count for example 05/13 and 05/23
+            # If the total count is smaller than 4000, we took the average of the previous day and the day after
             if index == 1:
                 if check_error_total_count_Flag & (int(things2write) < 4000): 
                     things2write = (data[item-1][index]+data[item+1][index]) / 2
                 
                 
-            worksheet.write(item+1, index, things2write) 
+            worksheet.write(item+2, index, things2write) 
     workbook.close()
 
 
@@ -239,7 +277,9 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
 if __name__ == '__main__':
     
     check_error_total_count_Flag = True # Check error count
-        # Check if there is a directory called Output, delete it if it exist.
+    
+    # For Bar_chart only
+    # Check if there is a directory called Output, delete it if it exist.
     if os.path.exists('Output'):
         shutil.rmtree('Output')
     # Creat a directory and save data inside it
@@ -252,7 +292,7 @@ if __name__ == '__main__':
     plot_data(data_sum[:,0],data_sum[:,1],data4=data_sum[:,2],label0='Total Flight',label4='Cancelled flight')
     plot_data(data_sum[:,0],data_sum[:,6],data1=data_sum[:,7],data2=data_sum[:,8],\
               data3=data_sum[:,9],label0='LGA',label1='JFK',label2='TEB',label3='EWR',plt_title='NYC Metropolitan')
-    plot_data(data_sum[:,0],data_sum[:,3],data1=data_sum[:,4],data2=data_sum[:,5],data3=data_sum[:,14],label0='BWI',label1='IAD',label2='DCA',label3='HEF',plt_title='Washington Metropolitan')
+    plot_data(data_sum[:,0],data_sum[:,3],data1=data_sum[:,4],data2=data_sum[:,5],label0='BWI',label1='IAD',label2='DCA',plt_title='Washington Metropolitan')
     write2xls(data_sum)
 
 
