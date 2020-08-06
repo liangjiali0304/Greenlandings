@@ -19,9 +19,8 @@ import os
 
 ##############################################################
 # Define global variable here
-global content 
-content = ["Date","Total Count","Total Cancelled", "BWI","IAD","DCA", "LGA", 
-                        "JFK", "TEB", "EWR","LAX","BUR","ASE","XNA"]
+global non_flt_content 
+non_flt_content = ["Date","Total Count","Total Cancelled"]
 
 
 
@@ -78,7 +77,7 @@ def search_air_2(data1,airline1,data2,airline2,NOT2=False):
 def variablename(var):
      return [tpl[0] for tpl in filter(lambda x: var is x[1], globals().items())]
 
-# GIven two lists and find the difference in between. Used to solve LGA LGAV mixed up confusion
+# Given two lists and find the difference in between. Used to solve LGA LGAV mixed up confusion
 def Diff(li1, li2): 
     return (list(set(li1) - set(li2)))
 
@@ -90,12 +89,18 @@ def check_unique(inx):
     
     return np.unique(return_arr)
 
-
+def count_TRACON_airport():
+    global TRACON_list 
+    TRACON_list = []
+    for TRACON,airports in TRACONs.items():
+        for airport in airports:
+            TRACON_list.append(airport)
 
 
 # function to return key for any value 
 def get_TRACON(val): 
     for TRACON, airports in TRACONs.items(): 
+        #print(airports)
         for airport in airports:
             if val == airport: 
                 return TRACON 
@@ -122,14 +127,17 @@ def interest_data(dtf_file):
 
     # Search the airport of interest ( ARR + DEP )
     # Start from BWI
-    for airport in content[3:]:
-        content_list.append(search_air_2(ARR,airport,Flt_stat, "CANCELLED",NOT2 = True)\
-                            + search_air_2(DEP,airport,Flt_stat, "CANCELLED",NOT2 = True))
-
-    global LGAV
-    LGAV = search_air_2(ARR,"LGAV",Flt_stat, "CANCELLED",NOT2 = True) +  search_air_2(DEP,'LGAV',Flt_stat, "CANCELLED",NOT2 = True)    
+    
     # Make amendment to LGA: LGA = search_LGA - LGAV
-    content_list[6] = Diff(content_list[6],LGAV)
+    LGAV = search_air_2(ARR,"LGAV",Flt_stat, "CANCELLED",NOT2 = True) +  search_air_2(DEP,'LGAV',Flt_stat, "CANCELLED",NOT2 = True)    
+    
+    for airport in TRACON_list:
+        ARR_DEP = search_air_2(ARR,airport,Flt_stat, "CANCELLED",NOT2 = True)\
+                            + search_air_2(DEP,airport,Flt_stat, "CANCELLED",NOT2 = True)
+                            
+        if airport == "LGA": ARR_DEP = Diff(ARR_DEP,LGAV)            
+        content_list.append(ARR_DEP)
+
     
     #bar_chart(Fltid,Date)
     
@@ -138,8 +146,12 @@ def interest_data(dtf_file):
     
     # Skip the first(Date) and Second(total_count) 
     for i in range(2, len(content_list)):
-        count.append(len(content_list[i]))  #  check_unique(content_list[i])
+        
+        # Do we determine by Unique Flight id 
+        if unique_FLid_Flag: count.append(check_unique(len(content_list[i])))   
+        else: count.append(len(content_list[i])) 
     return count
+
 
 def bar_chart(Fltid,date):
     date = str(date)
@@ -187,12 +199,13 @@ def write2xls(data,title='_flights.xlsx'):
     # Write the  to excel 
 
     # Write the TRACON and title to excel 
-    for inx in range(len(content)):
+    content2write = non_flt_content + TRACON_list
+    for inx in range(len(content2write)):
         # TRACON
-        worksheet.write(0, inx, get_TRACON(content[inx]))
+        worksheet.write(0, inx, get_TRACON(content2write[inx]))
         
         # Title
-        worksheet.write(1, inx, content[inx]) 
+        worksheet.write(1, inx, content2write[inx]) 
     
     
     # Write the content
@@ -220,7 +233,8 @@ def read_data(dir=''):
     
     files = glob.glob(dir+"*.dft")
     files.sort()
-    data_sum = np.zeros((len(files),len(content)))
+    # The +3 means We have to account for Date, Total count, Cancelled count
+    data_sum = np.zeros((len(files),len(TRACON_list)+3))
     print(files)
     for i in range(len(files)):
         print(files[i])
@@ -276,7 +290,9 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
 # Main running here
 if __name__ == '__main__':
     
-    check_error_total_count_Flag = True # Check error count
+    check_error_total_count_Flag = True # Check error total count (<4000 then use the average for the day before and after)
+    unique_FLid_Flag = False   # Determine if the we use the metrics as unique flight(False) or unique flight id(True)
+    print("Unique_Flght = %s\n\n" % str(not unique_FLid_Flag))
     
     # For Bar_chart only
     # Check if there is a directory called Output, delete it if it exist.
@@ -286,7 +302,7 @@ if __name__ == '__main__':
     os.makedirs('Output')
     
     
-    
+    count_TRACON_airport()
     data_sum = read_data()
     # LGA = data[:,6], JFK = 7, TEB=8, EWR = 9
     plot_data(data_sum[:,0],data_sum[:,1],data4=data_sum[:,2],label0='Total Flight',label4='Cancelled flight')
