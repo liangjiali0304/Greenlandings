@@ -27,15 +27,20 @@ non_flt_content = ["Date","Total Count","Total Cancelled"]
 
 global TRACONs
 TRACONs = {"CA:SCT":['LAX','SAN','SNA','BUR','ONT','VNY'],\
+           
+           # index: 9 - 12 
            "NY:N90":['JFK','EWR', 'LGA','TEB'], \
            "CA:NCT":['SFO','SJC','OAK','SMF','RNO'],\
+           
+           # index: 18 - 21 
            "DC:PCT":['IAD','DCA','BWI','RIC'],\
            "TX:D10":['DFW','DAL'],\
            "IL:C90":['ORD','MDW','PWK'],\
            "GA:A80":['ATL','PDK'],\
            "FL:MIA":['MIA','FLL','OPF','FXE'],\
            "TX:I90":['IAH','HOU'], \
-           "CO:D01":['DEN','APA']}
+           "CO:D01":['DEN','APA'],
+           "Other": ['ASE','XNA']}
 
 
 ###############################################################
@@ -261,7 +266,7 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
         dates.append( datetime.datetime(2000+yr, mo, day))
     
     # This is the ploting function itself
-    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=30)
+    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=300)
     locator = mdates.AutoDateLocator()
     formatter = mdates.ConciseDateFormatter(locator)
     ax1.xaxis.set_major_locator(locator)
@@ -284,7 +289,7 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
     labs = [l.get_label() for l in lns]
     ax1.legend(lns, labs, loc=0,prop={'size': 16})
     plt.show()
-    #fig.savefig(plt_title)
+    fig.savefig(plt_title)
 
 
 # Main running here
@@ -306,9 +311,9 @@ if __name__ == '__main__':
     data_sum = read_data()
     # LGA = data[:,6], JFK = 7, TEB=8, EWR = 9
     plot_data(data_sum[:,0],data_sum[:,1],data4=data_sum[:,2],label0='Total Flight',label4='Cancelled flight')
-    plot_data(data_sum[:,0],data_sum[:,6],data1=data_sum[:,7],data2=data_sum[:,8],\
-              data3=data_sum[:,9],label0='LGA',label1='JFK',label2='TEB',label3='EWR',plt_title='NYC Metropolitan')
-    plot_data(data_sum[:,0],data_sum[:,3],data1=data_sum[:,4],data2=data_sum[:,5],label0='BWI',label1='IAD',label2='DCA',plt_title='Washington Metropolitan')
+    plot_data(data_sum[:,0],data_sum[:,9],data1=data_sum[:,10],data2=data_sum[:,11],\
+              data3=data_sum[:,12],label0='JFK',label1='EWR',label2='LGA',label3='TEB',plt_title='NYC Metropolitan')
+    plot_data(data_sum[:,0],data_sum[:,18],data1=data_sum[:,19],data2=data_sum[:,20],label0='IAD',label1='DCA',label2='BWI',plt_title='Washington Metropolitan')
     write2xls(data_sum)
 
 
