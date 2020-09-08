@@ -40,7 +40,15 @@ TRACONs = {"CA:SCT":['LAX','SAN','SNA','BUR','ONT','VNY'],\
            "FL:MIA":['MIA','FLL','OPF','FXE'],\
            "TX:I90":['IAH','HOU'], \
            "CO:D01":['DEN','APA'],
-           "Other": ['ASE','XNA']}
+           "Other": ['ASE','XNA']
+           
+           '''
+           # Different airline bussiness model
+           "Hub Carriers":['AAL','UAL','DAL'],\
+           "Point to Point":['SWA'],\
+           "Fractional":['VNR','EJA','LXJ','OPT']
+           '''
+           }
 
 
 ###############################################################
@@ -195,12 +203,12 @@ def bar_chart(Fltid,date):
     
     
 # This function writes the data to an excel file
-def write2xls(data,title='_flights.xlsx'):
+def write2xls(data,airline_data=[],title='_flights.xlsx'):
     # Create an excel file
     time = dt.now().strftime("%Y_%m_%d_%H%M")
     workbook = xlsxwriter.Workbook(time+title) 
     worksheet = workbook.add_worksheet()
-
+    worksheet2 = workbook.add_worksheet()
     # Write the  to excel 
 
     # Write the TRACON and title to excel 
@@ -231,6 +239,13 @@ def write2xls(data,title='_flights.xlsx'):
                 
                 
             worksheet.write(item+2, index, things2write) 
+    '''
+        # Write the content
+    for item in range(len(airline_data)):
+        for index in range(len(airline_data[0])):
+            things2write = airline_data[item][index]    
+            worksheet2.write(item+2, index, things2write) 
+    '''
     workbook.close()
 
 
