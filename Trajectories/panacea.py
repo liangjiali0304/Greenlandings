@@ -40,7 +40,7 @@ TRACONs = {"CA:SCT":['LAX','SAN','SNA','BUR','ONT','VNY'],\
            "FL:MIA":['MIA','FLL','OPF','FXE'],\
            "TX:I90":['IAH','HOU'], \
            "CO:D01":['DEN','APA'],
-           "Other": ['ASE','XNA']
+           "Other": ['ASE','XNA']}
            
            '''
            # Different airline bussiness model
@@ -48,8 +48,6 @@ TRACONs = {"CA:SCT":['LAX','SAN','SNA','BUR','ONT','VNY'],\
            "Point to Point":['SWA'],\
            "Fractional":['VNR','EJA','LXJ','OPT']
            '''
-           }
-
 
 ###############################################################
 
