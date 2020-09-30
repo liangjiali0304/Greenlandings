@@ -1,6 +1,6 @@
-# The easist way to run this code is just type :
+# The easiest way to run this code is just type :
 #   python3 panacea.py
 # and it will automatically run the code. Please also put the dft files in the same folder as the panacea.py
 
-# However, to run python, you should install python3 and run from you terminal window.
+# However, to run python3, you should install python3 and run from your terminal window.
 # Here is a good link of downloading python3 using Anaconda: https://docs.anaconda.com/anaconda/install/windows/

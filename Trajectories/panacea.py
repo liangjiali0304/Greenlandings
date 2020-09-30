@@ -42,12 +42,16 @@ TRACONs = {"CA:SCT":['LAX','SAN','SNA','BUR','ONT','VNY'],\
            "CO:D01":['DEN','APA'],
            "Other": ['ASE','XNA']}
            
-           '''
+global BizModels
+BizModels = {
            # Different airline bussiness model
-           "Hub Carriers":['AAL','UAL','DAL'],\
-           "Point to Point":['SWA'],\
-           "Fractional":['VNR','EJA','LXJ','OPT']
-           '''
+           "Hub Carriers":['AAL','UAL','DAL','Total Hub'],\
+           "Point to Point":['SWA','Total Pt2Pt'],\
+           "Fractional":['EJA','Total Fractional'],\
+           "BizJet":['GAJ','XOJ','JTL','DPJ','EJM','FTH','Total BizJet'],
+           "Regional":['SKW','EDV','ENY','RPA','JIA','ASH','QXE','PDT','Total Regional']
+           #"Other":[]
+           }
 
 ###############################################################
 
@@ -103,14 +107,20 @@ def check_unique(inx):
 def count_TRACON_airport():
     global TRACON_list 
     TRACON_list = []
+    global Airline_list
+    Airline_list = []
     for TRACON,airports in TRACONs.items():
         for airport in airports:
             TRACON_list.append(airport)
+    
+    # This step convert a dictionary to a list
+    for Bizmod,Airlines in BizModels.items():
+        for airline in Airlines:
+            Airline_list.append(airline)
 
-
-# function to return key for any value 
-def get_TRACON(val): 
-    for TRACON, airports in TRACONs.items(): 
+# function given an airport IATA code and return TRACON for that airport
+def get_TRACON(val,Dictionary=TRACONs): 
+    for TRACON, airports in Dictionary.items(): 
         #print(airports)
         for airport in airports:
             if val == airport: 
@@ -132,10 +142,14 @@ def interest_data(dtf_file):
     # Find out how many flights status are cancelled
     Cancelled = search_air(Flt_stat, "CANCELLED")
     
-    # Build the return list 
+    # Build the return list for page 1 about airport counts
     global content_list
-    content_list = [Date, Total_count,Cancelled]
-
+    content_list = [Cancelled]
+    
+    # Build the return list for page 2 about airline counts in diff Bizmodels
+    global content_list2
+    content_list2 = []
+    
     # Search the airport of interest ( ARR + DEP )
     # Start from BWI
     
@@ -149,19 +163,42 @@ def interest_data(dtf_file):
         if airport == "LGA": ARR_DEP = Diff(ARR_DEP,LGAV)            
         content_list.append(ARR_DEP)
 
+    # the mark total count are used to intersect each total count points 
+    # and count the airline number in that business category together
+    mark_total_count =[-1]
+    for airline in Airline_list:
+        Airline_count = search_air(Fltid,airline)
+        
+        # Counting the total in that category
+        if 'Total' in airline:
+            # Find the index of that total count
+            total_inx = Airline_list.index(airline)
+            mark_total_count.append(total_inx)
+            # Smartly used the length of the list to determine the total counts from which index to which index
+            length = len(mark_total_count)
+            for index in range(mark_total_count[length-2]+1,mark_total_count[length-1]):
+                Airline_count += content_list2[index]
+        content_list2.append(Airline_count)
     
     #bar_chart(Fltid,Date)
     
-    #Output count
+    #Output airport count on Page 1
     count = [Date,Total_count]
     
+    #Output airline count on Page 2
+    count2 = [Date]
+    
     # Skip the first(Date) and Second(total_count) 
-    for i in range(2, len(content_list)):
+    for i in range(0, len(content_list)):
         
         # Do we determine by Unique Flight id 
         if unique_FLid_Flag: count.append(check_unique(len(content_list[i])))   
         else: count.append(len(content_list[i])) 
-    return count
+    
+    for i in range (0,len(content_list2)):
+        count2.append(len(content_list2[i]))
+    
+    return count,count2
 
 
 def bar_chart(Fltid,date):
@@ -218,8 +255,16 @@ def write2xls(data,airline_data=[],title='_flights.xlsx'):
         # Title
         worksheet.write(1, inx, content2write[inx]) 
     
+    content2write_2 = ["Date"] + Airline_list
+    for inx in range(len(content2write_2)):
+        # TRACON
+        worksheet2.write(0, inx, get_TRACON(content2write_2[inx],BizModels))
+        
+        # Title
+        worksheet2.write(1, inx, content2write_2[inx]) 
     
-    # Write the content
+    
+    # Write the airport content
     for item in range(len(data)):
         for index in range(len(data[0])):
             things2write = data[item][index]
@@ -237,13 +282,20 @@ def write2xls(data,airline_data=[],title='_flights.xlsx'):
                 
                 
             worksheet.write(item+2, index, things2write) 
-    '''
-        # Write the content
+            
+        # Write the airline content on page 2
     for item in range(len(airline_data)):
         for index in range(len(airline_data[0])):
-            things2write = airline_data[item][index]    
+            things2write = airline_data[item][index] 
+            
+            # In the condition of writing the date change 
+            # the format from 2000301 to 2020/3/1
+            if index == 0:
+                things2write = Canon_date(things2write)
+            
             worksheet2.write(item+2, index, things2write) 
-    '''
+
+
     workbook.close()
 
 
@@ -253,11 +305,13 @@ def read_data(dir=''):
     files.sort()
     # The +3 means We have to account for Date, Total count, Cancelled count
     data_sum = np.zeros((len(files),len(TRACON_list)+3))
+    biz_model_sum = np.zeros((len(files),len(Airline_list)+1))
     print(files)
     for i in range(len(files)):
         print(files[i])
-        data_sum[i] = (interest_data(files[i]))
-    return data_sum 
+        data_sum[i] = interest_data(files[i])[0]
+        biz_model_sum[i] = interest_data(files[i])[1]
+    return data_sum,biz_model_sum
 
 
 def Canon_date(i):
@@ -279,7 +333,7 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
         dates.append( datetime.datetime(2000+yr, mo, day))
     
     # This is the ploting function itself
-    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=300)
+    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=30)
     locator = mdates.AutoDateLocator()
     formatter = mdates.ConciseDateFormatter(locator)
     ax1.xaxis.set_major_locator(locator)
@@ -302,7 +356,7 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
     labs = [l.get_label() for l in lns]
     ax1.legend(lns, labs, loc=0,prop={'size': 16})
     plt.show()
-    fig.savefig(plt_title)
+    #fig.savefig(plt_title)
 
 
 # Main running here
@@ -321,14 +375,15 @@ if __name__ == '__main__':
     
     
     count_TRACON_airport()
-    data_sum = read_data()
+    data_sum,bizmodel_sum = read_data()
+    
+    
     # LGA = data[:,6], JFK = 7, TEB=8, EWR = 9
     plot_data(data_sum[:,0],data_sum[:,1],data4=data_sum[:,2],label0='Total Flight',label4='Cancelled flight')
     plot_data(data_sum[:,0],data_sum[:,9],data1=data_sum[:,10],data2=data_sum[:,11],\
               data3=data_sum[:,12],label0='JFK',label1='EWR',label2='LGA',label3='TEB',plt_title='NYC Metropolitan')
     plot_data(data_sum[:,0],data_sum[:,18],data1=data_sum[:,19],data2=data_sum[:,20],label0='IAD',label1='DCA',label2='BWI',plt_title='Washington Metropolitan')
-    write2xls(data_sum)
-
+    write2xls(data_sum,bizmodel_sum)
 
 
 
