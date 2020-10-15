@@ -45,11 +45,11 @@ TRACONs = {"CA:SCT":['LAX','SAN','SNA','BUR','ONT','VNY'],\
 global BizModels
 BizModels = {
            # Different airline bussiness model
-           "Hub Carriers":['AAL','UAL','DAL','Total Hub'],\
-           "Point to Point":['SWA','Total Pt2Pt'],\
-           "Fractional":['EJA','Total Fractional'],\
-           "BizJet":['GAJ','XOJ','JTL','DPJ','EJM','FTH','Total BizJet'],
-           "Regional":['SKW','EDV','ENY','RPA','JIA','ASH','QXE','PDT','Total Regional']
+           "Hub Carriers":['AAL','UAL','DAL','Total Hub','Mean Hub'],\
+           "Point to Point":['SWA','Total Pt2Pt','Mean Pt2Pt'],\
+           "Fractional":['EJA','Total Fractional','Mean Fractional'],\
+           "BizJet":['GAJ','XOJ','JTL','DPJ','EJM','FTH','Total BizJet','Mean BizJet'],
+           "Regional":['SKW','EDV','ENY','RPA','JIA','ASH','QXE','PDT','Total Regional','Mean Regional']
            #"Other":[]
            }
 
@@ -140,7 +140,7 @@ def interest_data(dtf_file):
     Date = dtf_file.split(".")[0]
     Total_count = len(Fltid)
     # Find out how many flights status are cancelled
-    Cancelled = search_air(Flt_stat, "CANCELLED")
+    Cancelled = len(search_air(Flt_stat, "CANCELLED"))
     
     # Build the return list for page 1 about airport counts
     global content_list
@@ -154,39 +154,55 @@ def interest_data(dtf_file):
     # Start from BWI
     
     # Make amendment to LGA: LGA = search_LGA - LGAV
-    LGAV = search_air_2(ARR,"LGAV",Flt_stat, "CANCELLED",NOT2 = True) +  search_air_2(DEP,'LGAV',Flt_stat, "CANCELLED",NOT2 = True)    
+    LGAV = len(search_air_2(ARR,"LGAV",Flt_stat, "CANCELLED",NOT2 = True) +  search_air_2(DEP,'LGAV',Flt_stat, "CANCELLED",NOT2 = True))    
     
     for airport in TRACON_list:
-        ARR_DEP = search_air_2(ARR,airport,Flt_stat, "CANCELLED",NOT2 = True)\
-                            + search_air_2(DEP,airport,Flt_stat, "CANCELLED",NOT2 = True)
+        ARR_DEP = len(search_air_2(ARR,airport,Flt_stat, "CANCELLED",NOT2 = True)\
+                            + search_air_2(DEP,airport,Flt_stat, "CANCELLED",NOT2 = True))
                             
-        if airport == "LGA": ARR_DEP = Diff(ARR_DEP,LGAV)            
+        if airport == "LGA": ARR_DEP = ARR_DEP - LGAV          
         content_list.append(ARR_DEP)
 
     # the mark total count are used to intersect each total count points 
     # and count the airline number in that business category together
-    mark_total_count =[-1]
+    global mark_total_count
+    mark_total_count =[-2]
+    
     for airline in Airline_list:
-        Airline_count = search_air(Fltid,airline)
+        Airline_count = len(search_air(Fltid,airline))
         
         # Counting the total in that category
         if 'Total' in airline:
             # Find the index of that total count
             total_inx = Airline_list.index(airline)
+            #print(total_inx)
             mark_total_count.append(total_inx)
             # Smartly used the length of the list to determine the total counts from which index to which index
             length = len(mark_total_count)
-            for index in range(mark_total_count[length-2]+1,mark_total_count[length-1]):
+            for index in range(mark_total_count[length-2]+2,mark_total_count[length-1]):
+                #print(content_list2[index])
                 Airline_count += content_list2[index]
+              
+        elif 'Mean' in airline:
+            # Mean = Total / # of datapoint
+            Airline_count = content_list2[-1] / (mark_total_count[length-1]-mark_total_count[length-2]-2)
+        
+        #else:
+            #Airline_count = search_air(Fltid,airline)
         content_list2.append(Airline_count)
     
     #bar_chart(Fltid,Date)
     
+    # Return the info(number) wanted to stored in the spreadsheet 
+    content_list = [Date,Total_count] + content_list
+    content_list2 = [Date] + content_list2
+    
+    '''
     #Output airport count on Page 1
     count = [Date,Total_count]
     
     #Output airline count on Page 2
-    count2 = [Date]
+    #count2 = [Date]
     
     # Skip the first(Date) and Second(total_count) 
     for i in range(0, len(content_list)):
@@ -197,8 +213,8 @@ def interest_data(dtf_file):
     
     for i in range (0,len(content_list2)):
         count2.append(len(content_list2[i]))
-    
-    return count,count2
+    '''
+    return content_list,content_list2 
 
 
 def bar_chart(Fltid,date):
@@ -333,7 +349,7 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
         dates.append( datetime.datetime(2000+yr, mo, day))
     
     # This is the ploting function itself
-    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=30)
+    fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=300)
     locator = mdates.AutoDateLocator()
     formatter = mdates.ConciseDateFormatter(locator)
     ax1.xaxis.set_major_locator(locator)
@@ -356,7 +372,7 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
     labs = [l.get_label() for l in lns]
     ax1.legend(lns, labs, loc=0,prop={'size': 16})
     plt.show()
-    #fig.savefig(plt_title)
+    fig.savefig(plt_title)
 
 
 # Main running here
@@ -365,7 +381,7 @@ if __name__ == '__main__':
     check_error_total_count_Flag = True # Check error total count (<4000 then use the average for the day before and after)
     unique_FLid_Flag = False   # Determine if the we use the metrics as unique flight(False) or unique flight id(True)
     print("Unique_Flght = %s\n\n" % str(not unique_FLid_Flag))
-    
+    airline_normalization = False # Flag that determine if we normalized the plotting 
     # For Bar_chart only
     # Check if there is a directory called Output, delete it if it exist.
     if os.path.exists('Output'):
@@ -379,10 +395,20 @@ if __name__ == '__main__':
     
     
     # LGA = data[:,6], JFK = 7, TEB=8, EWR = 9
+    '''
     plot_data(data_sum[:,0],data_sum[:,1],data4=data_sum[:,2],label0='Total Flight',label4='Cancelled flight')
     plot_data(data_sum[:,0],data_sum[:,9],data1=data_sum[:,10],data2=data_sum[:,11],\
               data3=data_sum[:,12],label0='JFK',label1='EWR',label2='LGA',label3='TEB',plt_title='NYC Metropolitan')
     plot_data(data_sum[:,0],data_sum[:,18],data1=data_sum[:,19],data2=data_sum[:,20],label0='IAD',label1='DCA',label2='BWI',plt_title='Washington Metropolitan')
+    '''
+    
+    for index in mark_total_count[1:]:
+        # determine if we normalize the plot or not
+        if airline_normalization: normalized = bizmodel_sum[:,index+2].max()
+        else:  normalized = 1
+        plot_data(data_sum[:,0],bizmodel_sum[:,index+2]/normalized,label0=Airline_list[index+1], plt_title=Airline_list[index+1])
+    
+    
     write2xls(data_sum,bizmodel_sum)
 
 
