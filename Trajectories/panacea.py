@@ -11,6 +11,7 @@ import glob
 import numpy as np
 from datetime import datetime as dt
 import matplotlib.dates as mdates
+from matplotlib.dates import DateFormatter
 import datetime
 import re
 from collections import Counter
@@ -350,28 +351,34 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
     
     # This is the ploting function itself
     fig, ax1 = plt.subplots(constrained_layout=True,figsize=(20, 10),dpi=300)
-    locator = mdates.AutoDateLocator()
-    formatter = mdates.ConciseDateFormatter(locator)
+    plt.rcParams["font.weight"] = "bold"
+    plt.rcParams["axes.labelweight"] = "bold"
+    locator = mdates.WeekdayLocator(interval=1)
+    formatter = DateFormatter("%d-%b")
     ax1.xaxis.set_major_locator(locator)
     ax1.xaxis.set_major_formatter(formatter)
-    ln0 = ax1.plot(dates, data0,label = label0,color='teal')
+    ln0 = ax1.plot(dates, data0,label = label0,color='orchid',linewidth=5)
     ax1.tick_params(axis='y', labelcolor='teal')
     
     # Combinition of lines so I can plot the legend easily later
     lns = ln0
     # Optional plotting of the rest three data on the same scale
-    if len(data1) != 0: ln1 = ax1.plot(dates, data1,label=label1,color='limegreen'); lns += ln1
-    if len(data2) != 0: ln2 = ax1.plot(dates, data2,label=label2,color='darkorange'); lns += ln2  
-    if len(data3) != 0: ln3 = ax1.plot(dates, data3,label=label3,color='orchid'); lns += ln3
+    if len(data1) != 0: ln1 = ax1.plot(dates, data1,label=label1,color='limegreen',linewidth=5); lns += ln1
+    if len(data2) != 0: ln2 = ax1.plot(dates, data2,label=label2,color='darkorange',linewidth=5); lns += ln2  
+    if len(data3) != 0: ln3 = ax1.plot(dates, data3,label=label3,color='darkgreen',linewidth=5); lns += ln3
     
     # Plotting data on different scale 
-    if len(data4) != 0: ax2 = ax1.twinx(); ln4 =ax2.plot(dates, data4,label=label4,color='r');ax2.tick_params(axis='y', labelcolor='r'); lns += ln4
-    ax1.set_title(plt_title)
-    ax1.set_ylabel('# of Flights')
+    if len(data4) != 0: ax2 = ax1.twinx(); ln4 =ax2.plot(dates, data4,label=label4,color='r',linewidth=5);ax2.tick_params(axis='y', labelcolor='r'); lns += ln4
+    ax1.set_title(plt_title,fontweight="bold", fontsize=30)
+    ax1.set_ylabel('# of Flights', fontsize=16)
     
     labs = [l.get_label() for l in lns]
-    ax1.legend(lns, labs, loc=0,prop={'size': 16})
-    plt.show()
+    leg = ax1.legend(lns, labs, loc=0,prop={'size': 16})
+    for line in leg.get_lines():
+        line.set_linewidth(4.0)
+    plt.xticks(rotation=45)
+
+    #plt.show()
     fig.savefig(plt_title)
 
 
