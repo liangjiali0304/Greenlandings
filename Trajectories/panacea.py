@@ -374,15 +374,16 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
     
     # Plotting data on different scale 
     if len(data4) != 0: ax2 = ax1.twinx(); ln4 =ax2.plot(dates, data4,label=label4,color='r',linewidth=5);ax2.tick_params(axis='y', labelcolor='r'); lns += ln4
-    ax1.set_title(plt_title,fontweight="bold", fontsize=30)
-    ax1.set_ylabel('# of Flights', fontsize=16)
+    ax1.set_title(plt_title,fontweight="bold", fontsize=50)
+    ax1.set_ylabel('# of Flights', fontsize=30)
     
     labs = [l.get_label() for l in lns]
-    leg = ax1.legend(lns, labs, loc=0,prop={'size': 16})
+    leg = ax1.legend(lns, labs, loc=0,prop={'size': 30})
     for line in leg.get_lines():
         line.set_linewidth(4.0)
     plt.xticks(rotation=45)
-
+    ax1.tick_params(axis="x", labelsize=16)
+    ax1.tick_params(axis="y", labelsize=25)
     #plt.show()
     fig.savefig(plt_title)
 
@@ -408,7 +409,7 @@ if __name__ == '__main__':
     
     # LGA = data[:,6], JFK = 7, TEB=8, EWR = 9
     
-    plot_data(data_sum[:,0],data_sum[:,1],data4=data_sum[:,2],label0='Total Flight',label4='Cancelled flight')
+    
     '''
     plot_data(data_sum[:,0],data_sum[:,9],data1=data_sum[:,10],data2=data_sum[:,11],\
               data3=data_sum[:,12],label0='JFK',label1='EWR',label2='LGA',label3='TEB',plt_title='NYC Metropolitan')
@@ -421,7 +422,7 @@ if __name__ == '__main__':
         else:  normalized = 1
         plot_data(data_sum[:,0],bizmodel_sum[:,index+2]/normalized,label0=Airline_list[index+1], plt_title=Airline_list[index+1])
     plot_data(data_sum[:,0],bizmodel_sum[:,-2]/normalized,label0="Other Airlines", plt_title="Other Airlines") 
-    
+    plot_data(data_sum[:,0],data_sum[:,1],label0='Total Flight')
     write2xls(data_sum,bizmodel_sum)
 
 
