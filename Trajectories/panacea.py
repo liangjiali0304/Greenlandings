@@ -50,8 +50,8 @@ BizModels = {
            "Point to Point":['SWA','Total Pt2Pt','Mean Pt2Pt'],\
            "Fractional":['EJA','Total Fractional','Mean Fractional'],\
            "BizJet":['GAJ','XOJ','JTL','DPJ','EJM','FTH','Total BizJet','Mean BizJet'],
-           "Regional":['SKW','EDV','ENY','RPA','JIA','ASH','QXE','PDT','Total Regional','Mean Regional']
-           #"Other":[]
+           "Regional":['SKW','EDV','ENY','RPA','JIA','ASH','QXE','PDT','Total Regional','Mean Regional'],
+           "Other":['Other','Count_ALL']
            }
 
 ###############################################################
@@ -169,6 +169,8 @@ def interest_data(dtf_file):
     global mark_total_count
     mark_total_count =[-2]
     
+    # This is a variable counted for the totals
+    five_business_total = 0
     for airline in Airline_list:
         Airline_count = len(search_air(Fltid,airline))
         
@@ -183,13 +185,16 @@ def interest_data(dtf_file):
             for index in range(mark_total_count[length-2]+2,mark_total_count[length-1]):
                 #print(content_list2[index])
                 Airline_count += content_list2[index]
-              
+            five_business_total += Airline_count 
         elif 'Mean' in airline:
             # Mean = Total / # of datapoint
             Airline_count = content_list2[-1] / (mark_total_count[length-1]-mark_total_count[length-2]-2)
         
-        #else:
-            #Airline_count = search_air(Fltid,airline)
+        elif 'Other' in airline:
+            Airline_count = len(Fltid) - five_business_total
+            
+        elif 'Count_ALL' in airline:
+            Airline_count = len(Fltid)
         content_list2.append(Airline_count)
     
     #bar_chart(Fltid,Date)
@@ -414,7 +419,7 @@ if __name__ == '__main__':
         if airline_normalization: normalized = bizmodel_sum[:,index+2].max()
         else:  normalized = 1
         plot_data(data_sum[:,0],bizmodel_sum[:,index+2]/normalized,label0=Airline_list[index+1], plt_title=Airline_list[index+1])
-    
+    plot_data(data_sum[:,0],bizmodel_sum[:,-2]/normalized,label0="Other Airlines", plt_title="Other Airlines") 
     
     write2xls(data_sum,bizmodel_sum)
 
