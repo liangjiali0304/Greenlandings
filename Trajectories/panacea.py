@@ -410,9 +410,10 @@ if __name__ == '__main__':
     # LGA = data[:,6], JFK = 7, TEB=8, EWR = 9
     
     
-    '''
+    
     plot_data(data_sum[:,0],data_sum[:,9],data1=data_sum[:,10],data2=data_sum[:,11],\
               data3=data_sum[:,12],label0='JFK',label1='EWR',label2='LGA',label3='TEB',plt_title='NYC Metropolitan')
+    '''
     plot_data(data_sum[:,0],data_sum[:,18],data1=data_sum[:,19],data2=data_sum[:,20],label0='IAD',label1='DCA',label2='BWI',plt_title='Washington Metropolitan')
     '''
     
@@ -423,6 +424,8 @@ if __name__ == '__main__':
         plot_data(data_sum[:,0],bizmodel_sum[:,index+2]/normalized,label0=Airline_list[index+1], plt_title=Airline_list[index+1])
     plot_data(data_sum[:,0],bizmodel_sum[:,-2]/normalized,label0="Other Airlines", plt_title="Other Airlines") 
     plot_data(data_sum[:,0],data_sum[:,1],label0='Total Flight')
+    plot_data(data_sum[:,0],bizmodel_sum[:,1],data1=bizmodel_sum[:,2],data2=bizmodel_sum[:,3], \
+              label0='American Airline', label1='United Airline',label2='Delta Airline',plt_title="Hub Carrier Airlines")
     write2xls(data_sum,bizmodel_sum)
 
 
