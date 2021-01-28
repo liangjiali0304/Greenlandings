@@ -385,7 +385,7 @@ def plot_data(date,data0,label0=None, data1=[],label1=None,\
     ax1.tick_params(axis="x", labelsize=16)
     ax1.tick_params(axis="y", labelsize=25)
     #plt.show()
-    fig.savefig(plt_title)
+    #fig.savefig(plt_title)
 
 
 # Main running here
